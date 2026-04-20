@@ -1,0 +1,740 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  <link rel="icon" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="HowXu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="前言Java虽然是一个跨平台的语言,但是实践中很难避免需要使用其他语言,如Rust和C,来编写更加高性能的算法函数来提高性能,或者获取更好的管理内存的能力.  这就必须谈到JNI. JNI是自JDK1.1起推出的一种调用外部库的方法(还有一种方法是JNA),使用JNI可以使Java程序调用外部的C动态运行库来执行某些操作. 调用JNI是一个稍显繁琐和复杂的过程,但其实做一些简单实践并不难. 同时,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实践JNI-Java调用C语言DLL库">
+<meta property="og:url" content="https://blog.howxu.com/2024/10/24/%E5%AE%9E%E8%B7%B5JNI-Java%E8%B0%83%E7%94%A8C%E8%AF%AD%E8%A8%80DLL%E5%BA%93/index.html">
+<meta property="og:site_name" content="HowXu&#39;s Blog">
+<meta property="og:description" content="前言Java虽然是一个跨平台的语言,但是实践中很难避免需要使用其他语言,如Rust和C,来编写更加高性能的算法函数来提高性能,或者获取更好的管理内存的能力.  这就必须谈到JNI. JNI是自JDK1.1起推出的一种调用外部库的方法(还有一种方法是JNA),使用JNI可以使Java程序调用外部的C动态运行库来执行某些操作. 调用JNI是一个稍显繁琐和复杂的过程,但其实做一些简单实践并不难. 同时,">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.howxu.com/images/image-1.png">
+<meta property="article:published_time" content="2024-10-24T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-20T09:41:47.240Z">
+<meta property="article:author" content="HowXu">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="c">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://blog.howxu.com/images/image-1.png">
+  
+  
+  
+  <title>实践JNI-Java调用C语言DLL库 - HowXu&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.howxu.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>HowXu</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/p2.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="实践JNI-Java调用C语言DLL库"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-24 00:00" pubdate>
+          2024年10月24日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">实践JNI-Java调用C语言DLL库</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>Java虽然是一个跨平台的语言,但是实践中很难避免需要使用其他语言,如Rust和C,来编写更加高性能的算法函数来提高性能,或者获取更好的管理内存的能力. </p>
+<p>这就必须谈到JNI. JNI是自JDK1.1起推出的一种调用外部库的方法(还有一种方法是JNA),使用JNI可以使Java程序调用外部的C动态运行库来执行某些操作. 调用JNI是一个稍显繁琐和复杂的过程,但其实做一些简单实践并不难. 同时,因为Java和C语言的函数传参方式,数据类型(尤其是类)等等并不完全相同,使用JNI时需要尤其弄清逻辑.</p>
+<p>在继续之前，我应该假设你具备以下知识点和技能：</p>
+<ol>
+<li>java 了解Java编译相关</li>
+<li>C和gcc编译器 了解动态库和编译相关命令</li>
+<li>知道MinGW</li>
+</ol>
+<p>环境:</p>
+<ol>
+<li>JDK 8</li>
+<li>Mingw64 13</li>
+</ol>
+<h1 id="简单实践"><a href="#简单实践" class="headerlink" title="简单实践"></a>简单实践</h1><h2 id="Java部分"><a href="#Java部分" class="headerlink" title="Java部分"></a>Java部分</h2><p>写一个<code>Main</code>文件和<code>A</code>文件，其中<code>Main.java</code>包括主函数,创建了一个<code>A</code>实例,并调用A类的add方法.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Main</span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span>&#123;<br>        <span class="hljs-type">A</span> <span class="hljs-variable">a</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">A</span>();<br>        System.out.printf(<span class="hljs-string">&quot;This is form Java! Addition is %d\n&quot;</span>,a.add(<span class="hljs-number">10</span>,<span class="hljs-number">20</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>接下来的<code>A.java</code>文件就不太一样了，先上代码:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">A</span>&#123;<br>	<span class="hljs-keyword">static</span>&#123;<br>		System.loadLibrary(<span class="hljs-string">&quot;./A&quot;</span>);<br>	&#125;<br>	<span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-type">int</span> <span class="hljs-title function_">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a,<span class="hljs-type">int</span> b)</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>首先,使用静态块来保证<code>System.loadLibrary</code>一定会加载<code>A.dll</code>这个文件(在Windows下为<code>A.dll</code>,Linux下为<code>libA.so</code>),然后,使用<code>native</code>修饰<code>add</code>这个方法,表明这是一个外部库实现的方法.  </p>
+<p>需要指出<code>System.loadLibrary</code>寻找文件的机制:  </p>
+<p>如果填入为<code>xx</code>,JVM会在JDK自带的lib库中寻找,再到<code>-Djava.library.path</code>参数指定的目录寻找  </p>
+<p>如果填入为<code>.xx</code>,JVM会在执行<code>java -jar</code>或者<code>java xxx</code>时的工作目录下寻找,比如是<code>/home/howxu/Desktop&gt; java Main</code>,这个动态链接库文件会被指定为<code>/home/howxu/Desktop/xx</code>.</p>
+<p>接下来编译Java文件:  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java ./Main.java ./A.java <span class="hljs-comment">#请确保二者在同一目录下</span><br></code></pre></td></tr></table></figure>
+
+<p>我们会获得<code>Main.class</code>和<code>A.class</code>文件,还没完,先前提到Java和C语言的数据类型问题,也就是说你直接写一个同名函数是<strong>无效的</strong>.我们需要专门的头文件和专门的函数声明,按照这个头文件来编写C库,这样才能确保C库中的函数被正确加载,参数正确传递.当然,这一点Java早就考虑到了.</p>
+<p>下面的命令要在<code>Main.class</code>,<code>A.class</code>和<code>A.java</code>同时存在的目录下进行(生成头文件的命令是对.java文件进行的,而且同时需要访问到.class文件):</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">javah A<br></code></pre></td></tr></table></figure>
+
+<p>特别地,如果你的类文件是包含在一个<code>package</code>里的,你需要用<code>-classpath</code>参数指定整个项目编译出的class文件目录.</p>
+<p>如果你使用jdk8以上,应该使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">javac -h ./ A <span class="hljs-comment"># ./表示在当前目录生成头文件</span><br></code></pre></td></tr></table></figure>
+
+<p>会获得一个<code>A.h</code>文件,接下来写的C库就和这个东西有关了.</p>
+<h2 id="C部分"><a href="#C部分" class="headerlink" title="C部分"></a>C部分</h2><p>先来看一下生成的<code>A.h</code>文件的内容:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">/* DO NOT EDIT THIS FILE - it is machine generated */</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;jni.h&gt;</span></span><br><span class="hljs-comment">/* Header for class A */</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> _Included_A</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> _Included_A</span><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> __cplusplus</span><br><span class="hljs-keyword">extern</span> <span class="hljs-string">&quot;C&quot;</span> &#123;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * Class:     A</span><br><span class="hljs-comment"> * Method:    add</span><br><span class="hljs-comment"> * Signature: (II)I</span><br><span class="hljs-comment"> */</span><br>JNIEXPORT jint JNICALL <span class="hljs-title function_">Java_A_add</span><br>  <span class="hljs-params">(JNIEnv *, jobject, jint, jint)</span>;<br><br><span class="hljs-meta">#<span class="hljs-keyword">ifdef</span> __cplusplus</span><br>&#125;<br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span></span><br></code></pre></td></tr></table></figure>
+
+<p>首先,导入了<code>jni.h</code>这个头文件,这个头文件是JDK带有的,一会儿编译的时候需要指定参数带上去  </p>
+<p><code>extern &quot;C&quot;</code>,表明以下内容会按照C语言标准格式进行编译.</p>
+<p><code>JNIEXPORT jint JNICALL Java_A_add (JNIEnv *, jobject, jint, jint);</code>这个显然就是<code>add</code>函数的声明了。</p>
+<p>可以看到这里做了很多更改,首先<code>JNIEXPORT</code>,这个符号在<code>JNI.h</code>中定义为<code>#define JNIEXPORT __declspec(dllexport)</code>,大体含义指的是这是一个外部导出的函数,可以交付给其他项目使用.</p>
+<p><code>jint</code>,JNi定义的int类型,本质是<code>long</code>.</p>
+<p><code>JNICALL</code>,本质是<code>__stdcall</code>,一种函数调用参数的约定,表明函数参数从右到左保存.(暂时不知道有什么用)</p>
+<p><code>Java_A_add</code>对<code>add</code>函数重命名,格式想必是<code>Java+Java内路径+函数名</code>.</p>
+<p><code>JNIEnv</code>,一个指向JNI运行环境的指针，后面我们会看到，我们通过这个指针访问JNI函数.</p>
+<p><code>jobject</code>,指的是<code>A</code>这个类,我们用它代替<code>this</code>.</p>
+<p>最后两个<code>jint</code>就是参数了.</p>
+<p>接下来简单实现一下这个函数就行了.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;A.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br>JNIEXPORT jint JNICALL <span class="hljs-title function_">Java_A_add</span><span class="hljs-params">(JNIEnv *env, jobject this, jint a, jint b)</span>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;This is from C! Addtion is %d\n&quot;</span>,a+b);<br>    <span class="hljs-keyword">return</span> a+b;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>编译成dll文件(使用Mingw,powershell,确保你的JAVA_HOME环境变量正确):</p>
+<figure class="highlight pwsh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs pwsh">gcc <span class="hljs-literal">-O3</span> .\A.c <span class="hljs-literal">-I</span><span class="hljs-string">&quot;<span class="hljs-variable">$env:JAVA_HOME</span>\include&quot;</span> <span class="hljs-literal">-I</span><span class="hljs-string">&quot;<span class="hljs-variable">$env:JAVA_HOME</span>\include\win32&quot;</span> <span class="hljs-literal">--shared</span> <span class="hljs-literal">-o</span> A.dll<br></code></pre></td></tr></table></figure>
+
+<p>这样就可以获得<code>A.dll</code>文件</p>
+<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p>确保<code>A.dll</code>,<code>A.class</code>,<code>Main.class</code>在同一目录,看看效果:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java Main<br></code></pre></td></tr></table></figure>
+
+<p><img src="/../images/image-1.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p>符合预期</p>
+<h2 id="干票大的"><a href="#干票大的" class="headerlink" title="干票大的"></a>干票大的</h2><p>既然说了JNI也可以实现函数,不妨试试写一个冒泡排序出来,这里就不解释了,直接上代码(Java中传递数组是地址传递):</p>
+<p><code>Main.java</code>:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Main</span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span>&#123;<br>		<span class="hljs-type">int</span>[] arr = &#123;<span class="hljs-number">10</span>,<span class="hljs-number">40</span>,<span class="hljs-number">23</span>,<span class="hljs-number">56</span>,<span class="hljs-number">2134</span>,<span class="hljs-number">536</span>,<span class="hljs-number">8765</span>,<span class="hljs-number">1234</span>,<span class="hljs-number">4535</span>,<span class="hljs-number">32426</span>,<span class="hljs-number">674634</span>,<span class="hljs-number">124</span>,<span class="hljs-number">2312</span>,<span class="hljs-number">134</span>&#125;;<br>        <span class="hljs-type">A</span> <span class="hljs-variable">a</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">A</span>();<br>		a.sort(arr);<br>		<span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> ele : arr)&#123;<br>			System.out.println(ele);<br>		&#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>A.java</code>:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">public class A&#123;<br>	static&#123;<br>		System.loadLibrary(<span class="hljs-string">&quot;./A&quot;</span>);<br>	&#125;<br>	public native void <span class="hljs-built_in">sort</span>(int[] arr);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>A.c</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;A.h&quot;</span></span><br><br><span class="hljs-comment">//jintarray 本质是一个 _jobject 类对象指针</span><br>JNIEXPORT <span class="hljs-type">void</span> JNICALL <span class="hljs-title function_">Java_A_sort</span><span class="hljs-params">(JNIEnv *env, jobject this, jintArray arr)</span>&#123;<br>    jint* <span class="hljs-built_in">array</span> = (*env)-&gt;GetIntArrayElements(env,arr,<span class="hljs-literal">NULL</span>); <span class="hljs-comment">//转换成C可操作数组</span><br>    jsize len = (*env)-&gt;GetArrayLength(env,arr); <span class="hljs-comment">//获取长度</span><br>    <span class="hljs-comment">// 冒泡排序</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; len; i++)<br>    &#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">size_t</span> j = <span class="hljs-number">1</span>; j &lt; len - i; j++)<br>        &#123;<br>            <span class="hljs-keyword">if</span> (<span class="hljs-built_in">array</span>[j] &lt; <span class="hljs-built_in">array</span>[j<span class="hljs-number">-1</span>])<br>            &#123;<br>                <span class="hljs-built_in">array</span>[j] ^= <span class="hljs-built_in">array</span>[j<span class="hljs-number">-1</span>];<br>                <span class="hljs-built_in">array</span>[j<span class="hljs-number">-1</span>] ^= <span class="hljs-built_in">array</span>[j];<br>                <span class="hljs-built_in">array</span>[j] ^= <span class="hljs-built_in">array</span>[j<span class="hljs-number">-1</span>];<br>            &#125;<br>        &#125;<br>        <br>    &#125;<br><br>    <span class="hljs-comment">//释放C数组</span><br>    (*env)-&gt;ReleaseIntArrayElements(env, arr, <span class="hljs-built_in">array</span>, <span class="hljs-number">0</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>结果:</p>
+<p><img src="/../images/image-2.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/java/" class="print-no-link">#java</a>
+      
+        <a href="/tags/c/" class="print-no-link">#c</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>实践JNI-Java调用C语言DLL库</div>
+      <div>https://blog.howxu.com/2024/10/24/实践JNI-Java调用C语言DLL库/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>HowXu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月24日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/10/24/%E9%80%86%E5%90%91-CE%E6%89%BE%E6%95%B0%E6%8D%AE%E5%9F%BA%E5%9D%80/" title="逆向-CE找数据基址">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">逆向-CE找数据基址</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/08/15/Github-Actions%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83release/" title="Github Actions自动发布release">
+                        <span class="hidden-mobile">Github Actions自动发布release</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      var light = 'github-light';
+      var dark = 'github-dark';
+      var schema = document.documentElement.getAttribute('data-user-color-scheme');
+      if (schema === 'dark') {
+        schema = dark;
+      } else {
+        schema = light;
+      }
+      window.UtterancesThemeLight = light;
+      window.UtterancesThemeDark = dark;
+      var s = document.createElement('script');
+      s.setAttribute('src', 'https://utteranc.es/client.js');
+      s.setAttribute('repo', 'HowXu/blog');
+      s.setAttribute('issue-term', 'pathname');
+      
+      s.setAttribute('label', 'utterances');
+      
+      s.setAttribute('theme', schema);
+      s.setAttribute('crossorigin', 'anonymous');
+      document.getElementById('comments').appendChild(s);
+    })
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

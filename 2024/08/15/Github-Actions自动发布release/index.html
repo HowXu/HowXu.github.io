@@ -1,0 +1,689 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  <link rel="icon" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="HowXu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="说明GitHub Actions 是 GitHub 的持续集成服务，于2018年10月推出。通过Github Actions可以实现诸多自动化功能，比如自动打包，自动发布Release等等。除此之外，GitHub Actions完全免费。 GitHub Actions 文档：  正文1.设置仓库密钥GitHub Actions多数时候会调用一个叫做github-actions的机器人进行工作，这意">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Github Actions自动发布release">
+<meta property="og:url" content="https://blog.howxu.com/2024/08/15/Github-Actions%E8%87%AA%E5%8A%A8%E5%8F%91%E5%B8%83release/index.html">
+<meta property="og:site_name" content="HowXu&#39;s Blog">
+<meta property="og:description" content="说明GitHub Actions 是 GitHub 的持续集成服务，于2018年10月推出。通过Github Actions可以实现诸多自动化功能，比如自动打包，自动发布Release等等。除此之外，GitHub Actions完全免费。 GitHub Actions 文档：  正文1.设置仓库密钥GitHub Actions多数时候会调用一个叫做github-actions的机器人进行工作，这意">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.howxu.com/images/action.png">
+<meta property="article:published_time" content="2024-08-15T11:25:22.000Z">
+<meta property="article:modified_time" content="2026-04-20T09:41:47.240Z">
+<meta property="article:author" content="HowXu">
+<meta property="article:tag" content="github">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://blog.howxu.com/images/action.png">
+  
+  
+  
+  <title>Github Actions自动发布release - HowXu&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.howxu.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>HowXu</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/p2.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Github Actions自动发布release"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-08-15 11:25" pubdate>
+          2024年8月15日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          764 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Github Actions自动发布release</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>GitHub Actions 是 GitHub 的持续集成服务，于2018年10月推出。通过Github Actions可以实现诸多自动化功能，比如自动打包，自动发布Release等等。除此之外，GitHub Actions完全免费。</p>
+<p><a target="_blank" rel="noopener" href="https://docs.github.com/zh/actions">GitHub Actions 文档</a>：</p>
+<p><img src="/../images/action.png" srcset="/img/loading.gif" lazyload></p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="1-设置仓库密钥"><a href="#1-设置仓库密钥" class="headerlink" title="1.设置仓库密钥"></a>1.设置仓库密钥</h2><p>GitHub Actions多数时候会调用一个叫做<code>github-actions</code>的机器人进行工作，这意味着我们必须为仓库添加Token才能让GitHub Actions正常工作。</p>
+<p>访问你的<code>settings</code>页面，找到<code>Developer settings</code>，选中<code>Personal access tokens</code>，选中子选项<code>Token (classic)</code>，点击右上角<code>Generate</code>后再次选择<code>classic</code>，在密钥的设置界面取个名字，设置日期，<font color=red>勾选框图中的三个权限</font>即可。<br><img src="/../images/1726712353632.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353645.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353655.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353673.png" srcset="/img/loading.gif" lazyload></p>
+<p>拉到最下方点击<code>generate</code>后，复制密钥信息：</p>
+<p><img src="/../images/1726712353687.png" srcset="/img/loading.gif" lazyload></p>
+<p>打开你的项目的<code>settings</code>页面，找到<code>Secrets</code>选项卡，选中<code>Actions</code>，选中下方<code>New secret</code>，<font color=red>名字不重要可以随便取，但是这个名字要记住后面要用</font>，填入刚刚的密钥后保存即可。</p>
+<p><img src="/../images/1726712353697.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353710.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="2-打开仓库权限"><a href="#2-打开仓库权限" class="headerlink" title="2.打开仓库权限"></a>2.打开仓库权限</h2><p>因为Release涉及文件读取，因此要把<code>setings-Action-general</code>中的读写权限开启：</p>
+<p><img src="/../images/1726712353721.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="3-配置自动化文件"><a href="#3-配置自动化文件" class="headerlink" title="3.配置自动化文件"></a>3.配置自动化文件</h2><p>GitHub Actions的自动化信息来自项目根目录下<code>.github/workflows</code>文件夹下后缀为<code>.yml</code>的文件(其文件格式遵循yaml)</p>
+<p>Yaml文件在GitHub Actions中具有条件判断能力，你可以设置多个文件来满足不同的需要。</p>
+<p>新建一个Release文件，填入以下内容即可：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">name:</span> <span class="hljs-string">Build</span> <span class="hljs-string">and</span> <span class="hljs-string">Release</span><br><br><span class="hljs-attr">on:</span><br>  <span class="hljs-attr">push:</span><br>    <span class="hljs-attr">tags:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-string">&quot;v*&quot;</span><br><br><span class="hljs-attr">jobs:</span><br>  <span class="hljs-attr">build:</span><br>    <span class="hljs-attr">runs-on:</span> <span class="hljs-string">ubuntu-latest</span><br><br>    <span class="hljs-attr">steps:</span><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Checkout</span><br>        <span class="hljs-attr">uses:</span> <span class="hljs-string">actions/checkout@v2</span><br><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Install</span> <span class="hljs-string">gcc</span><br>        <span class="hljs-attr">run:</span> <span class="hljs-string">sudo</span> <span class="hljs-string">apt</span> <span class="hljs-string">install</span> <span class="hljs-string">-y</span> <span class="hljs-string">gcc</span><br><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Make</span> <span class="hljs-string">Build</span> <span class="hljs-string">dir</span><br>        <span class="hljs-attr">run:</span> <span class="hljs-string">mkdir</span> <span class="hljs-string">build</span><br><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Build</span><br>        <span class="hljs-attr">run:</span> <span class="hljs-string">gcc</span> <span class="hljs-string">a.c</span> <span class="hljs-string">-o</span> <span class="hljs-string">./build/release</span><br><br>      <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">Release</span><br>        <span class="hljs-attr">uses:</span> <span class="hljs-string">softprops/action-gh-release@v2</span><br>        <span class="hljs-attr">with:</span><br>          <span class="hljs-attr">token:</span> <span class="hljs-string">$&#123;&#123;</span> <span class="hljs-string">secrets.123dsa</span> <span class="hljs-string">&#125;&#125;</span><br>          <span class="hljs-attr">body_path:</span> <span class="hljs-string">./CHANGELOG.md</span><br>          <span class="hljs-attr">files:</span> <span class="hljs-string">|</span><br><span class="hljs-string">            ./build/**</span><br><span class="hljs-string">            ./CHANGELOG.md</span><br><span class="hljs-string"></span><br></code></pre></td></tr></table></figure>
+
+<p>我不会细致地解释为什么这样写，在<a href="#%E8%AF%B4%E6%98%8E">说明</a>的文档超链接里有所有内容。</p>
+<p><code>name</code>:这个自动化的名称，会在GitHub Actions中作为分别选项卡进行区分<br><code>on</code>:执行条件。因为支持通配符，这里的设置为<strong>当此push的标签为v开头时执行</strong><br><code>jobs</code>:很显然是做些什么<br><code>build</code>:其中的<code>runs-on</code>指定在最新的ubuntu系统上运行<br><code>steps</code>:执行内容，其中<code>name</code>指名称(不是很重要)，<code>run</code>指定执行的代码。需要注意的是所有<code>run</code>命令的工作目录都是项目根目录</p>
+<p>第一步为<strong>通用步骤</strong>，复制源代码并检查哈希值。</p>
+<p>二三四步为一个简单的gcc构建。</p>
+<p>第五步为构建发布，使用了<a target="_blank" rel="noopener" href="https://github.com/marketplace/actions/gh-release">GH Release</a>这个Action，<code>with</code>指定了参数，<code>token</code>指定给机器人用的token，与上文添加密钥时的名字一致，，<code>body_path</code>指定从根目录的<code>CHANGELOG.md</code>文件读取内容作为Release的内容(不加这一行也可以)，<code>files</code>指定Release的文件，<code>|</code>为Yaml的特定符号，其下可以使用多行文字。通配符<code>**</code>代表build目录下所有文件。</p>
+<p>效果:</p>
+<p><img src="/../images/1726712353735.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353747.png" srcset="/img/loading.gif" lazyload><br><img src="/../images/1726712353759.png" srcset="/img/loading.gif" lazyload></p>
+<h2 id="4-写在最后"><a href="#4-写在最后" class="headerlink" title="4.写在最后"></a>4.写在最后</h2><p>GitHub Actions自带有很多的参数，例如<code>github.ref</code>代表本次执行时传入的标签，并且<code>GH Release</code>这个Action还具有设置pre-release等等功能，可以自定义出相当实用的自动化。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/github/" class="print-no-link">#github</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Github Actions自动发布release</div>
+      <div>https://blog.howxu.com/2024/08/15/Github-Actions自动发布release/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>HowXu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年8月15日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/10/24/%E5%AE%9E%E8%B7%B5JNI-Java%E8%B0%83%E7%94%A8C%E8%AF%AD%E8%A8%80DLL%E5%BA%93/" title="实践JNI-Java调用C语言DLL库">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">实践JNI-Java调用C语言DLL库</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/05/02/%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8-ASF%E5%AE%9E%E7%8E%B0%E5%85%A8%E5%A4%A9%E6%8C%82%E5%8D%A1%E6%8C%82%E6%97%B6%E9%95%BF/" title="云服务器+ASF实现全天挂卡挂时长">
+                        <span class="hidden-mobile">云服务器+ASF实现全天挂卡挂时长</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      var light = 'github-light';
+      var dark = 'github-dark';
+      var schema = document.documentElement.getAttribute('data-user-color-scheme');
+      if (schema === 'dark') {
+        schema = dark;
+      } else {
+        schema = light;
+      }
+      window.UtterancesThemeLight = light;
+      window.UtterancesThemeDark = dark;
+      var s = document.createElement('script');
+      s.setAttribute('src', 'https://utteranc.es/client.js');
+      s.setAttribute('repo', 'HowXu/blog');
+      s.setAttribute('issue-term', 'pathname');
+      
+      s.setAttribute('label', 'utterances');
+      
+      s.setAttribute('theme', schema);
+      s.setAttribute('crossorigin', 'anonymous');
+      document.getElementById('comments').appendChild(s);
+    })
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

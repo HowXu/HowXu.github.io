@@ -1,0 +1,721 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  <link rel="icon" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="HowXu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="前言上一篇文章是有关ShareCode的处理的,里面涉及到了把关键代码劫持到另一个位置进行自己的处理然后再返回的行为,也就是Hook. 当然上一篇文章的Hook非常简陋非常LowB,而且是依赖CE才能进行的,你也不希望每次开游戏都要先找地址再手写一段汇编吧. 所以这篇文章里我们会用最简单的内存读写的方式手写一个Hook.把Hook的二进制代码封装成一个应用程序,每次只需要启动该程序就可以自动完成代">
+<meta property="og:type" content="article">
+<meta property="og:title" content="逆向-用C语言实现一个简单的Hook">
+<meta property="og:url" content="https://blog.howxu.com/2024/10/26/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84Hook/index.html">
+<meta property="og:site_name" content="HowXu&#39;s Blog">
+<meta property="og:description" content="前言上一篇文章是有关ShareCode的处理的,里面涉及到了把关键代码劫持到另一个位置进行自己的处理然后再返回的行为,也就是Hook. 当然上一篇文章的Hook非常简陋非常LowB,而且是依赖CE才能进行的,你也不希望每次开游戏都要先找地址再手写一段汇编吧. 所以这篇文章里我们会用最简单的内存读写的方式手写一个Hook.把Hook的二进制代码封装成一个应用程序,每次只需要启动该程序就可以自动完成代">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.howxu.com/images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-6.png">
+<meta property="article:published_time" content="2024-10-26T10:30:00.000Z">
+<meta property="article:modified_time" content="2026-04-20T09:41:47.241Z">
+<meta property="article:author" content="HowXu">
+<meta property="article:tag" content="逆向">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://blog.howxu.com/images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-6.png">
+  
+  
+  
+  <title>逆向-用C语言实现一个简单的Hook - HowXu&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.howxu.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>HowXu</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/p2.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="逆向-用C语言实现一个简单的Hook"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-10-26 10:30" pubdate>
+          2024年10月26日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">逆向-用C语言实现一个简单的Hook</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>上一篇文章是有关ShareCode的处理的,里面涉及到了把关键代码劫持到另一个位置进行自己的处理然后再返回的行为,也就是Hook. 当然上一篇文章的Hook非常简陋非常LowB,而且是依赖CE才能进行的,你也不希望每次开游戏都要先找地址再手写一段汇编吧.</p>
+<p>所以这篇文章里我们会用最简单的内存读写的方式手写一个Hook.把Hook的二进制代码封装成一个应用程序,每次只需要启动该程序就可以自动完成代码劫持的功能,没错这就是一个简单的游戏修改器了.</p>
+<h1 id="实战"><a href="#实战" class="headerlink" title="实战"></a>实战</h1><h2 id="CE部分"><a href="#CE部分" class="headerlink" title="CE部分"></a>CE部分</h2><p>我们还是用老朋友PVZ做实验,目标不是很高,我们希望把种植植物阳光减少修改为种植植物阳光增加(当然你也可以修改为种植不减少,但是那个只需要nop就行了).</p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p>还是先用CE找到阳光的基址,然后设置指针,调查访问地址情况找到反汇编部分,这个上两篇已经有过程了,这里直接展示结果:</p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-1.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p>明显下面的指令是含有一个减法的,就是阳光值减少的逻辑了:</p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-2.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h2 id="程序实现"><a href="#程序实现" class="headerlink" title="程序实现"></a>程序实现</h2><p>首先你要关注的是指令集问题,PVZ是个32位的应用程序,你编写的代码应该遵循32位标准,包括一些特定函数和寄存器名称.</p>
+<p>首先我们要手写一段汇编代码保证我们的修改逻辑是正确的,直接在<code>sub</code>处注入汇编,如下即可:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs asm">alloc(newmem,2048)<br><br>newmem:<br>add esi,ebx //只是把sub改成add<br>mov [edi+00005560],esi<br>jmp &quot;PlantsVsZombiesCUTEv0.9.5.exe&quot;+1BA7C<br><br>&quot;PlantsVsZombiesCUTEv0.9.5.exe&quot;+1BA74:<br>jmp newmem<br>nop 3<br></code></pre></td></tr></table></figure>
+
+<p>注入之后可以直接跳转到CE为我们开辟的新内存区域查看代码的字节码:</p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-3.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-4.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p>接下来就是写C程序的部分了.可以看到CE代替我们做了内存偏移计算,内存空间开辟和汇编翻译为字节码的工作,接下来只需要在程序中手动实现这些部分就行了.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;windows.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><br><span class="hljs-type">char</span> code[] = &#123;<br>    <span class="hljs-number">0x01</span>, <span class="hljs-number">0xDE</span>,                         <span class="hljs-comment">// add</span><br>    <span class="hljs-number">0x89</span>, <span class="hljs-number">0xB7</span>, <span class="hljs-number">0x60</span>, <span class="hljs-number">0x55</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>, <span class="hljs-comment">// mov</span><br>    <span class="hljs-number">0xE9</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>        <span class="hljs-comment">// jmp 后面的地址要手动算</span><br>&#125;;<br><br><span class="hljs-type">char</span> jmp_code[] = &#123;<br>    <span class="hljs-number">0xE9</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>, <span class="hljs-number">0x00</span>,<span class="hljs-number">0x90</span>,<span class="hljs-number">0x90</span>,<span class="hljs-number">0x90</span><br>&#125;; <span class="hljs-comment">// 一串单独的jmp指令</span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span><br>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;输入pid:&quot;</span>);<br>    <span class="hljs-type">unsigned</span> pid = <span class="hljs-number">0</span>;<br>    <span class="hljs-built_in">scanf</span>(<span class="hljs-string">&quot;%d&quot;</span>, &amp;pid);<br>    <span class="hljs-comment">//打开游戏进程</span><br>    HANDLE game = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);<br>    <span class="hljs-keyword">if</span> (game)<br>    &#123;<br>        <span class="hljs-comment">//内存分配</span><br>        LPVOID code_mem = VirtualAllocEx(game, <span class="hljs-literal">NULL</span>, <span class="hljs-number">1024</span>, MEM_COMMIT, PAGE_EXECUTE_READWRITE);<br>        <span class="hljs-keyword">if</span> (code_mem)<br>        &#123;<br>            <span class="hljs-comment">//为了把正确的jmp偏移加到code里</span><br>            <span class="hljs-type">unsigned</span> *offset_code = (LPVOID)code + <span class="hljs-keyword">sizeof</span>(code) - <span class="hljs-number">0x4</span>;<br>            <span class="hljs-comment">//计算偏移并赋值</span><br>            offset_code[<span class="hljs-number">0</span>] = <span class="hljs-number">0x0041BA7C</span> - ((<span class="hljs-type">unsigned</span>)code_mem + <span class="hljs-keyword">sizeof</span>(code));<br>            <span class="hljs-comment">//写内存</span><br>            BOOL write_mem = WriteProcessMemory(game, code_mem, code, <span class="hljs-keyword">sizeof</span>(code), <span class="hljs-literal">NULL</span>);<br>            <span class="hljs-keyword">if</span> (write_mem)<br>            &#123;<br>                <span class="hljs-comment">//为了把正确的jmp偏移加到jmp_code里</span><br>                <span class="hljs-type">unsigned</span> *offset_jmp_code = (LPVOID)jmp_code + <span class="hljs-keyword">sizeof</span>(jmp_code) - <span class="hljs-number">0x7</span>;<br>                <span class="hljs-comment">//计算偏移并赋值</span><br>                offset_jmp_code[<span class="hljs-number">0</span>] = (<span class="hljs-type">unsigned</span>)code_mem - <span class="hljs-number">0x0041BA74</span> - <span class="hljs-number">0x5</span>;<br>                <span class="hljs-comment">//写内存</span><br>                BOOL write_mem = WriteProcessMemory(game, (LPVOID)<span class="hljs-number">0x0041BA74</span>, jmp_code, <span class="hljs-keyword">sizeof</span>(jmp_code), <span class="hljs-literal">NULL</span>);<br>                <span class="hljs-keyword">if</span> (write_mem)<br>                &#123;<br>                    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Hook online\n&quot;</span>);<br>                    <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>); <span class="hljs-comment">//程序不退出</span><br>                &#125;<br>                <span class="hljs-keyword">else</span><br>                &#123;<br>                    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;写不了内存你不炸了吗?\n&quot;</span>);<br>                    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">else</span><br>            &#123;<br>                <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;写不了内存你不炸了吗?\n&quot;</span>);<br>                <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>            &#125;<br>        &#125;<br>        <span class="hljs-keyword">else</span><br>        &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;分配不了内存你不就炸了吗?\n&quot;</span>);<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">else</span><br>    &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;打不开句柄你不炸了吗?\n&quot;</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>除掉下面的异常处理部分,解释一下代码的大部分函数调用和变量.</p>
+<p>两个<code>char</code>数组的初始化,很明显两个char数组里装的就是汇编对应的字节码,一个是从<code>sub</code>跳转后的汇编代码,一个是从原本<code>sub</code>跳转过去的代码.</p>
+<p>选择<code>char</code>这个类型完全是因为C语言中这个类型的大小刚好是1字节且没有负值,刚好可以放入一个字节码(机器码是按照1字节进行翻译的).获取汇编转字节码方式很多,你既可以直接手写,也可以直接从CE那里注入之后复制过来用.</p>
+<p>这里需要注意<code>jmp_code</code>的后面填充了很多<code>0x90</code>,也就是<code>nop</code>,因为这里直接转移了<code>sub</code>和<code>mov</code>两条指令一共有8字节,但是<code>jmp</code>只需要五个字节,剩下的三个字节最好进行填充.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">HANDLE game = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);<br></code></pre></td></tr></table></figure>
+
+<p>WindowsAPI提供的一个函数,返回进程的句柄,<code>ALL_ACESS</code>权限让我们能够直接操纵进程的内存.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">LPVOID code_mem = VirtualAllocEx(game, <span class="hljs-literal">NULL</span>, <span class="hljs-number">1024</span>, MEM_COMMIT, PAGE_EXECUTE_READWRITE);<br></code></pre></td></tr></table></figure>
+
+<p>在<code>game</code>句柄代表的程序开辟一块1024字节大小的内存,要求该页内存可读可写可执行.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">unsigned</span> *offset_code = (LPVOID)code + <span class="hljs-keyword">sizeof</span>(code) - <span class="hljs-number">0x4</span>;<br></code></pre></td></tr></table></figure>
+
+<p>这里比较难理解,首先<code>code</code>是个数组,<code>LPVOID</code>是typedef的<code>void *</code>类型,这里转换之后可以获得<code>code</code>的指针,加上<code>code</code>的整个字节大小就可以来到<code>code</code>的最后一个字节所在位置,<code>-0x4</code>就可以来到<code>jmp</code>,也就是<code>0xE9</code>的后面一个位置.</p>
+<p>同时声明为四字节大小的<code>unsigned</code>,我们就可以利用C语言指针的特点,对offset[0]赋值,把一个八位地址填充到<code>0xE9</code>的后面.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">offset_code[<span class="hljs-number">0</span>] = <span class="hljs-number">0x0041BA7C</span> - ((<span class="hljs-type">unsigned</span>)code_mem + <span class="hljs-keyword">sizeof</span>(code));<br></code></pre></td></tr></table></figure>
+<p>这个更难理解,首先要知道在机器码层面,<code>jmp</code>跳转接的对象是<strong>下一条指令的地址相对目标地址的偏移</strong>.如下:</p>
+<p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-5.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<p>先阐明三个关键,第一,<code>VirtualAllocEx</code>分配的地址在上层,地址比应用程序代码在的地址要大;第二,因为<code>jmp</code>指令本身有五个字节长度,所以最后会减去<code>0x5</code>;第三,jmp的操作对象是一个<strong>有符号的数</strong>,从高向低跳是一个负数,从低向高是正数(然而实际上CPU根本不分正负,这只是人的理解).</p>
+<p><code>0x0041BA7C</code>是要跳转回去的地址,<code>(unsigned)code_mem</code>获得分配内存区域的第一个字节码的地址,加上size实际上已经超过了code的大小,来自code最后一个字节的下一个字节位置,即下一条指令的地址,二者相减就可以得到所要的偏移量了.需要注意的是这其实是一种做完运算后的形式,原来的形式应该是:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c">offset_code[<span class="hljs-number">0</span>] = <span class="hljs-number">0x0041BA7C</span> - ((<span class="hljs-type">unsigned</span>)code_mem + <span class="hljs-keyword">sizeof</span>(code) - <span class="hljs-number">0x5</span> + <span class="hljs-number">0x5</span>);<br><span class="hljs-comment">//或者是:</span><br>offset_code[<span class="hljs-number">0</span>] = <span class="hljs-number">0x0041BA7C</span> - ((<span class="hljs-type">unsigned</span>)code_mem + <span class="hljs-keyword">sizeof</span>(code) - <span class="hljs-number">0x5</span>) - <span class="hljs-number">0x5</span>;<br></code></pre></td></tr></table></figure>
+
+<p>先<code>-0x5</code>来到<code>jmp</code>的位置,再<code>+0x5</code>来到下一条指令的位置然后再做运算.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">BOOL write_mem = WriteProcessMemory(game, code_mem, code, <span class="hljs-keyword">sizeof</span>(code), <span class="hljs-literal">NULL</span>);<br></code></pre></td></tr></table></figure>
+
+<p>这一行是写入内存,写入进程为<code>game</code>,写入位置为<code>code_mem</code>指向的地址,写入内容为<code>code</code>整个数组,写入大小为size.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">unsigned</span> *offset_jmp_code = (LPVOID)jmp_code + <span class="hljs-keyword">sizeof</span>(jmp_code) - <span class="hljs-number">0x7</span>;<br>offset_jmp_code[<span class="hljs-number">0</span>] = (<span class="hljs-type">unsigned</span>)code_mem - <span class="hljs-number">0x0041BA74</span> - <span class="hljs-number">0x5</span>;<br>BOOL write_mem = WriteProcessMemory(game, (LPVOID)<span class="hljs-number">0x0041BA74</span>, jmp_code, <span class="hljs-keyword">sizeof</span>(jmp_code), <span class="hljs-literal">NULL</span>);<br></code></pre></td></tr></table></figure>
+
+<p>这几行就是一样的了,修改<code>jmp_code</code>数组内容赋予正确的跳转地址.这里的偏移计算也是一样的,其原本格式为:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c">offset_jmp_code[<span class="hljs-number">0</span>] = (<span class="hljs-type">unsigned</span>)code_mem - (<span class="hljs-number">0x0041BA74</span> + <span class="hljs-number">0x5</span>);<br></code></pre></td></tr></table></figure>
+
+<p>目标地址<code>code_mem</code>减去<code>0x0041BA74</code>当前位置(这个位置会被替换成5个字节的jmp指令),加上5来到下一条指令的位置.</p>
+<p>其实可以总结一个公式(任意情况都可以用):</p>
+<p><font color=red size=6px>偏移&#x3D;目标地址-(jmp所在地址+5)</font></p>
+<p>最后就是一些异常处理了.</p>
+<h2 id="看看效果"><a href="#看看效果" class="headerlink" title="看看效果:"></a>看看效果:</h2><p><img src="/../images/%E9%80%86%E5%90%91-%E7%94%A8C%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84hook/image-6.png" srcset="/img/loading.gif" lazyload alt="alt text"></p>
+<h1 id="题外话"><a href="#题外话" class="headerlink" title="题外话"></a>题外话</h1><p>虽然效果实现了,但其实这是最最lowB的一种hook方法,理论上我们应该还要做一下字节码保存机制让字节码可以恢复回去.而且这种hook直接修改内存,非常容易被CRC32这类计算内存区域的摘要算法手段检测出来(当然你再hook一下CRC32检测的DLL就又能跑了).</p>
+<p>更好的hook方法有很多(甚至可以达到无痕hook),一种是依赖Windows下的异常处理机制,比如软件断点类型的hook,其将原有部分设置为<code>int 3</code>强制中断跳转到异常处理函数;硬件断点直接设置<code>dr0-dr3</code>调试寄存器强制开启异常处理(这种方法甚至不会修改原有地址的代码).</p>
+<p>还有一种用的比较多的vt-ept hook,操作EPT，把要HOOK的函数的对应的页面的pte属性改成只能读写,不能执行,把函数页面复制一份,在复制出来的页面做HOOK,页面属性为只能执行,同样可以做到不修改原有代码而实现hook.</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%80%86%E5%90%91/" class="print-no-link">#逆向</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>逆向-用C语言实现一个简单的Hook</div>
+      <div>https://blog.howxu.com/2024/10/26/逆向-用C语言实现一个简单的Hook/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>HowXu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年10月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2024/10/26/%E9%80%86%E5%90%91-%E8%BD%AF%E4%BB%B6%E4%B8%AD%E6%96%ADhook%E5%92%8C%E7%A1%AC%E4%BB%B6%E4%B8%AD%E6%96%ADhook/" title="逆向-软件中断hook和硬件中断hook">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">逆向-软件中断hook和硬件中断hook</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/10/25/%E9%80%86%E5%90%91-CE_Tutur9_ShareCode%E4%B8%80%E8%88%AC%E5%A4%84%E7%90%86/" title="逆向-CE_Tutur9_ShareCode一般处理">
+                        <span class="hidden-mobile">逆向-CE_Tutur9_ShareCode一般处理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      var light = 'github-light';
+      var dark = 'github-dark';
+      var schema = document.documentElement.getAttribute('data-user-color-scheme');
+      if (schema === 'dark') {
+        schema = dark;
+      } else {
+        schema = light;
+      }
+      window.UtterancesThemeLight = light;
+      window.UtterancesThemeDark = dark;
+      var s = document.createElement('script');
+      s.setAttribute('src', 'https://utteranc.es/client.js');
+      s.setAttribute('repo', 'HowXu/blog');
+      s.setAttribute('issue-term', 'pathname');
+      
+      s.setAttribute('label', 'utterances');
+      
+      s.setAttribute('theme', schema);
+      s.setAttribute('crossorigin', 'anonymous');
+      document.getElementById('comments').appendChild(s);
+    })
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

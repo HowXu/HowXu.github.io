@@ -1,0 +1,743 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  <link rel="icon" href="https://q1.qlogo.cn/g?b=qq&amp;nk=672252397&amp;s=640">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="HowXu">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="写在前面-Termux  &emsp;Termux 是一个 Android 终端仿真应用程序，用于在 Android 手机上搭建一个完整的 Linux 环境。 不需要 root 权限 Termux 就可以正常运行。Termux 基本实现 Linux 下的许多基本操作。因此，我们同样可以通过termux使用git将项目提交到github。     &emsp;文章中git语法同样适用于windows">
+<meta property="og:type" content="article">
+<meta property="og:title" content="在Termux上使用git将项目提交到github">
+<meta property="og:url" content="https://blog.howxu.com/2022/10/09/%E5%9C%A8Termux%E4%B8%8A%E4%BD%BF%E7%94%A8git%E5%B0%86%E9%A1%B9%E7%9B%AE%E6%8F%90%E4%BA%A4%E5%88%B0github/index.html">
+<meta property="og:site_name" content="HowXu&#39;s Blog">
+<meta property="og:description" content="写在前面-Termux  &emsp;Termux 是一个 Android 终端仿真应用程序，用于在 Android 手机上搭建一个完整的 Linux 环境。 不需要 root 权限 Termux 就可以正常运行。Termux 基本实现 Linux 下的许多基本操作。因此，我们同样可以通过termux使用git将项目提交到github。     &emsp;文章中git语法同样适用于windows">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.howxu.com/images/1726712356630.png">
+<meta property="article:published_time" content="2022-10-09T08:24:20.000Z">
+<meta property="article:modified_time" content="2026-04-20T09:41:47.240Z">
+<meta property="article:author" content="HowXu">
+<meta property="article:tag" content="github">
+<meta property="article:tag" content="termux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://blog.howxu.com/images/1726712356630.png">
+  
+  
+  
+  <title>在Termux上使用git将项目提交到github - HowXu&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"blog.howxu.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>HowXu</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/p2.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="在Termux上使用git将项目提交到github"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-10-09 08:24" pubdate>
+          2022年10月9日 早上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">在Termux上使用git将项目提交到github</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="写在前面-Termux"><a href="#写在前面-Termux" class="headerlink" title="写在前面-Termux"></a>写在前面-Termux</h1><p>  &emsp;Termux 是一个 Android 终端仿真应用程序，用于在 Android 手机上搭建一个完整的 Linux 环境。 不需要 root 权限 Termux 就可以正常运行。Termux 基本实现 Linux 下的许多基本操作。因此，我们同样可以通过termux使用git将项目提交到github。  </p>
+<p>  &emsp;文章中git语法同样适用于windows，linux操作系统下的git提交。</p>
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><p>首先打开termux，使用下面的命令安装git工具包  </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pkg install git -y<br></code></pre></td></tr></table></figure>
+
+<p>安装完成后，使用cd命令进入项目文件夹中。</p>
+<p>&emsp;当然别忘了在github上新建一个项目仓库，不懂使用github的可以自行百度。</p>
+<h1 id="正文"><a href="#正文" class="headerlink" title="正文"></a>正文</h1><h2 id="1-使用git上传源码"><a href="#1-使用git上传源码" class="headerlink" title="1.使用git上传源码"></a>1.使用git上传源码</h2><p>首先，在cd进入项目文件夹后，我们在termux键入</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git init -b main<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;其中的<code>git init</code>会将当前文件夹初始化为本地仓库，<code>-b main</code>参数则是把该本地仓库的默认分支修改为main。</p>
+<p>&emsp;当然也可以不使用<code>-b main</code>这个参数，但是由于github某次更新后，github新建仓库的默认远程分支由master变成了main，而termux镜像源中的git工具包在初始化时<strong>仍然使用master作为默认分支</strong>，在不修改的情况下后续提交会有很多难以处理的问题。我这里还是建议使用这个参数。</p>
+<p>&emsp;之后我们一般会得到这样的结果:</p>
+<p><img src="/../images/1726712356397.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;视不同的操作系统后面的路径会不同。</p>
+<p> 然后，键入</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git add .<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;其中的<code>git add</code>是用于标记作为仓库文件的命令，在后面接上.会标记该目录下的所有文件。键入后一般我们会得到这样的结果:</p>
+<p><img src="/../images/1726712356440.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;git告诉我们这是一个未认证安全的位置，我们只需要按照它的提示键入提供的命令即可，不同的项目文件夹路径提供的命令也不同，比如这里提供的是<code>git config --gpobal --add  safe.directory /storage/....</code>，在windows系统上后面的路径可能是<code>C:/Project/....</code>。</p>
+<p>&emsp;按照提示键入命令后再次使用<code>git add .</code>，如果未收到提示说明标记完成了。</p>
+<p> 再然后，我们键入:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git commit -m <span class="hljs-string">&quot;提交说明&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>&emsp;<code>git commit</code>可以将本地仓库的项目提交到github的缓存区，在不使用<code>-m &quot;提交说明&quot;</code>会默认使用一个文本编辑器(在linux或者termux上是使用vi)创建一个文件，要求在该文件中键入提交说明并在用户保存后开始提交，很繁琐，所以建议直接使用<code>-m</code>参数，提交说明的内容可以自己填，因人而异。</p>
+<p>&emsp;第一次使用<code>git commit</code>会提示需要配置账户信息。直接键入以下命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git config --global user.name <span class="hljs-string">&quot;Example&quot;</span><br>git config --global user.email e@example.com<br></code></pre></td></tr></table></figure>
+
+<p> 其中<br><code>&quot;Example&quot;</code>是你在github上注册时的用户名<br><code>e@example.com</code>是你注册github时的邮箱  </p>
+<p> &emsp;然后再次输入<code>git commit -m &quot;提交说明&quot;</code></p>
+<p><img src="/../images/1726712356478.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;提示的内容是因情况而异的，但是基本上看到类似这样的提示说提交缓存已经成功了。</p>
+<p> 接下来，我们再键入</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git remote add Remote名称 你的仓库的地址<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;这串命令的含义是为项目添加一个Remote，该Remote绑定了一个仓库地址，其中的Remote名称和仓库地址都由个人决定，仓库地址可以在github仓库页上找到，注意，这里应该使用<strong>https地址</strong>，键入后没有命令提示说明remote添加成功了。</p>
+<p>&emsp;我们可以使用这个命令做到为一个项目添加多个仓库地址。</p>
+<p>添加remote之后使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git push -u 你添加的remote名称 main<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;之后会要求输入你的用户名和密码，<strong>注意！！这里的密码指的不是github账户的密码，而是指令牌token</strong>！！我们需要在github的设置中申请一个token。</p>
+<p>首先，打开github的设置，找到Developer settings</p>
+<p><img src="/../images/1726712356498.png" srcset="/img/loading.gif" lazyload></p>
+<p>之后找到Personal accese tokens</p>
+<p><img src="/../images/1726712356527.png" srcset="/img/loading.gif" lazyload></p>
+<p>选择创建一个新的令牌，之后输入密码验证，即可跳转到密钥生成页，下方的权限可以靠谷歌翻译自己选择，时限也可以自己定，最后得到密钥之后使用<code>git push -u 你的remote名称 main</code>并按照提示键入用户名和密钥，请注意，<strong>在Termux或者linux系统中输入密码是不会显示已输入的密码的。</strong><br>如下图</p>
+<p><img src="/../images/1726712356546.png" srcset="/img/loading.gif" lazyload></p>
+<p>说明github的提交已经成功了</p>
+<h2 id="2-进阶-关于分支"><a href="#2-进阶-关于分支" class="headerlink" title="2.进阶-关于分支"></a>2.进阶-关于分支</h2><p>&emsp;git有一套强大的分支管理系统，这里会提供一个简单的关于termux环境下关于修改默认提交分支的教程。</p>
+<p>&emsp;首先，在最开始使用<code>git init -b main</code>初始化时，我们就可以不使用main作为初始化默认分支。github的分支分为本地分支和远程分支，在github的网页上我们可以删除，添加，修改自己的分支，而在本地，我们也可以通过命令删除或者添加分支，这里只提供termux如何在本地不使用默认分支上传的方式，更多的命令可以自行百度。</p>
+<p>&emsp;首先在github仓库中新建一个分支，基本上有谷歌翻译就能做到。然后记住新建分支的名称，以<code>1234</code>为例，在命令行中键入以下命令新建本地分支</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">git branch 1234<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;之后再使用一次提交命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">git add .<br>git commit -m <span class="hljs-string">&quot;提交说明&quot;</span><br>git push -u remote名称 1234<br></code></pre></td></tr></table></figure>
+
+<p>&emsp;即可将项目上传到新的分支上，使用<code>git branch -D 1234</code>可以删除本地分支，但是该命令不能直接删除本地默认分支，具体修改方法移步百度。</p>
+<p>&emsp;同样的我们也可以在创建仓库时将默认分支先行修改为自己想要的内容，在使用<code>git init -b main</code>时就可将main修改为自定的默认分支。</p>
+<h2 id="3-进阶-使用SSH方式上传github项目"><a href="#3-进阶-使用SSH方式上传github项目" class="headerlink" title="3.进阶-使用SSH方式上传github项目"></a>3.进阶-使用SSH方式上传github项目</h2><p>&emsp;频繁的输入token上传文件是个很烦人的事情，我们可以在termux中通过使用openssh为自己的github添加ssh公钥，实现ssh无密码提交项目。</p>
+<p>首先在termux中安装openssh</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">pkg install openssh<br></code></pre></td></tr></table></figure>
+
+<p>安装完成后键入</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">ssh-keygen -t rsa<br></code></pre></td></tr></table></figure>
+
+<p>之后会得到提示</p>
+<p><img src="/../images/1726712356573.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;在termux下的openssh只会识别安装目录下的.ssh文件夹，并且只识别名称为<code>id_rsa</code>的密钥文件，所以这里直接回车。之后会提示<code>Enter passphrase (empty for no passphrase)</code>，因为是想实现无密码传输，所以这里直接回车两次。之后ssh密钥即生成完成<br><img src="/../images/1726712356590.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;之后根据save目录cd进入，使用ls看到有两个文件，一个是<code>id_rsa</code>，另一个是<code>id_rsa.pub</code>，我们使用vim或者vi打开<code>id_rsa.pub</code>(不会使用vim和vi可以使用cp命令将该文件拷贝到其他可用文件浏览器打开的位置，直接使用txt格式打开)，复制文件中所有内容。回到github的setting页面，找到SSH and GPG Keys，新建一个SSH Key。</p>
+<p><img src="/../images/1726712356614.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;在title中随便输入想要的内容，key type不更改，在key中填入刚刚复制的<code>id_rsa.pub</code>中的内容并保存。</p>
+<p>保存之后可以到Termux上验证一下，如下命令:</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs nginx"><span class="hljs-attribute">ssh</span> -T git<span class="hljs-variable">@github</span>.com<br></code></pre></td></tr></table></figure>
+
+<p>第一次运行会询问是否允许未验证的服务器，输入yes回车后会收到github的欢迎词，如下:</p>
+<p><img src="/../images/1726712356630.png" srcset="/img/loading.gif" lazyload></p>
+<p>&emsp;之后就可以使用<code>git remote add</code>为你的仓库创建一个ssh的remote(ssh链接可以在github的仓库页找到)，使用<code>git push</code>上传时将原有https的remote换成ssh的remote，就不需要输入密码认证了。当然，你也可以继续用https的remote，<code>git push</code>时也不需要输入密码。</p>
+<h2 id="4-暴力上传"><a href="#4-暴力上传" class="headerlink" title="4.暴力上传"></a>4.暴力上传</h2><p>&emsp;在有些时候由于文件内容不同(如在最开始构建时加入了readme.md，但是没有在本地新建readme.md)，文件修改时间落后上传文件，github的提交会失败，这时可以使用<code>git push -u remote名称 分支名称 -f</code>暴力上传文件。</p>
+<p>&emsp;非常不建议这样做，因为暴力上传后文件恢复方式很复杂，在多人协作时也会引起一系列麻烦。</p>
+<h1 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h1><p>&emsp;以上就是所有关于Termux环境下使用git的我个人的一些心得，感谢阅读。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/github/" class="print-no-link">#github</a>
+      
+        <a href="/tags/termux/" class="print-no-link">#termux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>在Termux上使用git将项目提交到github</div>
+      <div>https://blog.howxu.com/2022/10/09/在Termux上使用git将项目提交到github/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>HowXu</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年10月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/10/09/Termux%E7%9A%84ssh%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F-%E8%BF%9E%E6%8E%A5%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%8Cssh%E5%AF%86%E9%92%A5%E7%99%BB%E5%BD%95%E5%92%8CTermux%E4%BA%92%E8%81%94/" title="Termux的ssh使用方式(连接云服务器，ssh密钥登录和Termux互联)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Termux的ssh使用方式(连接云服务器，ssh密钥登录和Termux互联)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#comments', function() {
+      var light = 'github-light';
+      var dark = 'github-dark';
+      var schema = document.documentElement.getAttribute('data-user-color-scheme');
+      if (schema === 'dark') {
+        schema = dark;
+      } else {
+        schema = light;
+      }
+      window.UtterancesThemeLight = light;
+      window.UtterancesThemeDark = dark;
+      var s = document.createElement('script');
+      s.setAttribute('src', 'https://utteranc.es/client.js');
+      s.setAttribute('repo', 'HowXu/blog');
+      s.setAttribute('issue-term', 'pathname');
+      
+      s.setAttribute('label', 'utterances');
+      
+      s.setAttribute('theme', schema);
+      s.setAttribute('crossorigin', 'anonymous');
+      document.getElementById('comments').appendChild(s);
+    })
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
