@@ -4,7 +4,7 @@
   
   
   <entry>
-    <title>很久没做点什么的碎碎念</title>
+    <title>纯C/Vulkan实现着色器向量加法</title>
     <link href="/2026/04/25/%E7%AE%80%E5%8D%95%E7%9A%84Vulkan%E7%9D%80%E8%89%B2%E5%99%A8/"/>
     <url>/2026/04/25/%E7%AE%80%E5%8D%95%E7%9A%84Vulkan%E7%9D%80%E8%89%B2%E5%99%A8/</url>
     
@@ -61,27 +61,6 @@
   
   
   <entry>
-    <title>很久没做点什么的碎碎念</title>
-    <link href="/2024/11/12/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
-    <url>/2024/11/12/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/</url>
-    
-    <content type="html"><![CDATA[<h1 id="关于VSCode的C-插件的经验之谈"><a href="#关于VSCode的C-插件的经验之谈" class="headerlink" title="关于VSCode的C#插件的经验之谈"></a>关于VSCode的C#插件的经验之谈</h1><p>我个人是不太喜欢Windows上装SDK用msi安装包的形式的，所以早期我的C#开发(.Net 6.0)是直接用的二进制SDK. 当时还好，现在VSCode的C# Dev插件更新了很多，带来了很多问题.  </p><p>首先第一个, Dev插件对SDK路径的检测明显有些问题, <code>.Net Install Tool</code>,<code>C#</code>,<code>C# Dev Kit</code>的dotnet路径检测各有自己的多重的配置选项(有些还有问题), 以至于后端的OmniSharp开不起来. 配置了很长时间, 即使没有运行报错, 也没有很好的语法补全和跳转功能(悲).  </p><p>但是上述的所有问题在使用Microsoft官方的SDK安装包不情不愿地向C:&#x2F;Program Files文件夹装入.Net 9.0之后迎刃而解:(. 检测也好了, .Net Install Tool也不会自作主张地在User目录下载单独的SDK了, LSP后端也好了, 语法提示自动补全啥都好了. 微软真有你的.  </p><p>强制使用OmniSharp作为LSP后端只需要配置:<br><img src="/../images/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/image.png" alt="alt text"></p><h1 id="C语言内联汇编的一些说法"><a href="#C语言内联汇编的一些说法" class="headerlink" title="C语言内联汇编的一些说法"></a>C语言内联汇编的一些说法</h1><p>大一上做C语言作业的时候实在受不了这种无脑力的东西, 就在VS2019里试了一下内联汇编, 大概是访问一个二阶数组矩阵的值什么的, 当时还不知道只能是x86才能直接内联, x64要放在外面单独编译才能链接. 所以最近单独拿出来玩一下.</p><p>首先, 汇编有很多种编译器, 不同的编译器适合不同的平台, 同时不同的编译器也使用不同的语法(或某一语法的有些许差别的变种):<br>AT&amp;T语法: 是GNU项目的汇编语法, 适合Unix&#x2F;Linux平台, Mingw&#x2F;GNU Assembler(GAS, 也就是常用的as命令的编译器)支持, Mingw也支持intel语法.<br>Intel语法: NASM&#x2F;MASM(Microsoft Macro Assembler，Windows 专用)&#x2F;VS使用的语法, 其中NASM也可以在Linux平台上使用.  </p><p>个人更喜欢Intel语法, 所以下面的小示例也是Intel语法的.  </p><p>理论上来说, 很多语言都可以拿去和C混编, 这些语言之间也有混编的用法, 其本质是通过编译器转化为可链接文件, 通过各个语言的特定的外部函数声明进行调用, 最后依靠链接器将函数声明和可链接文件中的函数部分组合到一起(其实不太严谨, 熟悉编译原理应该能理解这个流程). 因此不说C内联汇编, 也有Rust内联汇编, Rust内联C等等用法.  </p><p>那这个流程就很清楚了, 首先写一个简单的C程序</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> <span class="hljs-title function_">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span>; <span class="hljs-comment">// extern关键字</span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Add result is: %d\n&quot;</span>,add(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>));<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>extern 是 C&#x2F;C++ 中的一个关键字 主要用于 声明变量或函数是在其他文件或模块中定义的 告诉编译器“这个符号的定义不在当前文件，链接时再去其他地方找”. 它通常用于多文件编程，避免重复定义. 在这里声明add这个函数是外部定义的, 如果是C++ 这里应该写成extern “C”.  </p><p>然后是汇编部分(Intel风格 windows平台):</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs asm">section .text ; 划分为代码区<br>global add  ; 声明为全局符号<br><br>add:<br>    push eax<br>    mov eax, edi<br>    add eax, esi<br>    ret         <br>    pop eax<br></code></pre></td></tr></table></figure><p>不同的约定下这个传入参数的寄存器位置是不同的, 上面是x64版本, x86版本是这样的:</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs asm">section .text<br>global add<br><br>add:<br>    mov eax, [esp+4]<br>    add eax, [esp+8]<br>    ret<br></code></pre></td></tr></table></figure><p>这里使用NASM编译器(MSYS)和mingw进行编译:</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">nasm -f win64 add.asm -o add.o # -f指定编译格式 除了win64还有elf32 elf64<br>gcc main.c add.o -o main.exe # 这里其实应该把main.c也做成.o文件再链接<br></code></pre></td></tr></table></figure><p>结果:<br><img src="/../images/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/image-1.png" alt="alt text"></p><p>也可以使用AT&amp;T语法，直接使用mingw的as编译器:  </p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs asm">.section .text<br>.global add<br><br>add:<br>    movq %rcx, %rax<br>    addq %rdx, %rax<br>    ret            <br># 这下面一定要多一行<br></code></pre></td></tr></table></figure><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">as --64 -o add.o add.asm<br>gcc main.c add.o -o main.exe<br></code></pre></td></tr></table></figure><p>结果也是一样的. 你也可以用intel语法, 然后给as添加参数<code>-msyntax=intel</code></p>]]></content>
-    
-    
-    
-    <tags>
-      
-      <tag>c</tag>
-      
-      <tag>asm</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
     <title>小记最近干了些什么的碎碎念</title>
     <link href="/2024/11/12/%E5%B0%8F%E8%AE%B0%E6%9C%80%E8%BF%91%E5%B9%B2%E4%BA%86%E4%BA%9B%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
     <url>/2024/11/12/%E5%B0%8F%E8%AE%B0%E6%9C%80%E8%BF%91%E5%B9%B2%E4%BA%86%E4%BA%9B%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/</url>
@@ -97,6 +76,27 @@
       <tag>vscode</tag>
       
       <tag>opencv</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>很久没做点什么的碎碎念</title>
+    <link href="/2024/11/12/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/"/>
+    <url>/2024/11/12/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/</url>
+    
+    <content type="html"><![CDATA[<h1 id="关于VSCode的C-插件的经验之谈"><a href="#关于VSCode的C-插件的经验之谈" class="headerlink" title="关于VSCode的C#插件的经验之谈"></a>关于VSCode的C#插件的经验之谈</h1><p>我个人是不太喜欢Windows上装SDK用msi安装包的形式的，所以早期我的C#开发(.Net 6.0)是直接用的二进制SDK. 当时还好，现在VSCode的C# Dev插件更新了很多，带来了很多问题.  </p><p>首先第一个, Dev插件对SDK路径的检测明显有些问题, <code>.Net Install Tool</code>,<code>C#</code>,<code>C# Dev Kit</code>的dotnet路径检测各有自己的多重的配置选项(有些还有问题), 以至于后端的OmniSharp开不起来. 配置了很长时间, 即使没有运行报错, 也没有很好的语法补全和跳转功能(悲).  </p><p>但是上述的所有问题在使用Microsoft官方的SDK安装包不情不愿地向C:&#x2F;Program Files文件夹装入.Net 9.0之后迎刃而解:(. 检测也好了, .Net Install Tool也不会自作主张地在User目录下载单独的SDK了, LSP后端也好了, 语法提示自动补全啥都好了. 微软真有你的.  </p><p>强制使用OmniSharp作为LSP后端只需要配置:<br><img src="/../images/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/image.png" alt="alt text"></p><h1 id="C语言内联汇编的一些说法"><a href="#C语言内联汇编的一些说法" class="headerlink" title="C语言内联汇编的一些说法"></a>C语言内联汇编的一些说法</h1><p>大一上做C语言作业的时候实在受不了这种无脑力的东西, 就在VS2019里试了一下内联汇编, 大概是访问一个二阶数组矩阵的值什么的, 当时还不知道只能是x86才能直接内联, x64要放在外面单独编译才能链接. 所以最近单独拿出来玩一下.</p><p>首先, 汇编有很多种编译器, 不同的编译器适合不同的平台, 同时不同的编译器也使用不同的语法(或某一语法的有些许差别的变种):<br>AT&amp;T语法: 是GNU项目的汇编语法, 适合Unix&#x2F;Linux平台, Mingw&#x2F;GNU Assembler(GAS, 也就是常用的as命令的编译器)支持, Mingw也支持intel语法.<br>Intel语法: NASM&#x2F;MASM(Microsoft Macro Assembler，Windows 专用)&#x2F;VS使用的语法, 其中NASM也可以在Linux平台上使用.  </p><p>个人更喜欢Intel语法, 所以下面的小示例也是Intel语法的.  </p><p>理论上来说, 很多语言都可以拿去和C混编, 这些语言之间也有混编的用法, 其本质是通过编译器转化为可链接文件, 通过各个语言的特定的外部函数声明进行调用, 最后依靠链接器将函数声明和可链接文件中的函数部分组合到一起(其实不太严谨, 熟悉编译原理应该能理解这个流程). 因此不说C内联汇编, 也有Rust内联汇编, Rust内联C等等用法.  </p><p>那这个流程就很清楚了, 首先写一个简单的C程序</p><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br><span class="hljs-keyword">extern</span> <span class="hljs-type">int</span> <span class="hljs-title function_">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span>; <span class="hljs-comment">// extern关键字</span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Add result is: %d\n&quot;</span>,add(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>));<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>extern 是 C&#x2F;C++ 中的一个关键字 主要用于 声明变量或函数是在其他文件或模块中定义的 告诉编译器“这个符号的定义不在当前文件，链接时再去其他地方找”. 它通常用于多文件编程，避免重复定义. 在这里声明add这个函数是外部定义的, 如果是C++ 这里应该写成extern “C”.  </p><p>然后是汇编部分(Intel风格 windows平台):</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs asm">section .text ; 划分为代码区<br>global add  ; 声明为全局符号<br><br>add:<br>    push eax<br>    mov eax, edi<br>    add eax, esi<br>    ret         <br>    pop eax<br></code></pre></td></tr></table></figure><p>不同的约定下这个传入参数的寄存器位置是不同的, 上面是x64版本, x86版本是这样的:</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs asm">section .text<br>global add<br><br>add:<br>    mov eax, [esp+4]<br>    add eax, [esp+8]<br>    ret<br></code></pre></td></tr></table></figure><p>这里使用NASM编译器(MSYS)和mingw进行编译:</p><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">nasm -f win64 add.asm -o add.o # -f指定编译格式 除了win64还有elf32 elf64<br>gcc main.c add.o -o main.exe # 这里其实应该把main.c也做成.o文件再链接<br></code></pre></td></tr></table></figure><p>结果:<br><img src="/../images/%E5%BE%88%E4%B9%85%E6%B2%A1%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%E7%9A%84%E7%A2%8E%E7%A2%8E%E5%BF%B5/image-1.png" alt="alt text"></p><p>也可以使用AT&amp;T语法，直接使用mingw的as编译器:  </p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs asm">.section .text<br>.global add<br><br>add:<br>    movq %rcx, %rax<br>    addq %rdx, %rax<br>    ret            <br># 这下面一定要多一行<br></code></pre></td></tr></table></figure><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">as --64 -o add.o add.asm<br>gcc main.c add.o -o main.exe<br></code></pre></td></tr></table></figure><p>结果也是一样的. 你也可以用intel语法, 然后给as添加参数<code>-msyntax=intel</code></p>]]></content>
+    
+    
+    
+    <tags>
+      
+      <tag>c</tag>
+      
+      <tag>asm</tag>
       
     </tags>
     
